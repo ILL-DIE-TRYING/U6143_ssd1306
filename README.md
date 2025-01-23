@@ -6,8 +6,9 @@ sudo raspi-config
 Choose Interface Options 
 Enable i2c
 
-##  Clone U6143_ssd1306 library 
+##  Clone U6143_ssd1306 library in /opt
 ```bash
+cd /opt
 git clone https://github.com/UCTRONICS/U6143_ssd1306.git
 ```
 ## Compile 
@@ -17,24 +18,45 @@ cd U6143_ssd1306/C
 ```bash
 sudo make clean && sudo make 
 ```
-## Run 
+## Test run. CTRL+C to exit after verifying the display lights up
 ```
 sudo ./display
 ```
+## Add automatic start script using Systemd
+- Create a new systemd file by opening it on Nano
+```bash
+sudo nano /etc/systemd/system/ucdisplay.service
+```
+- Add the following in ucdisplay.service
+```bash
+[Unit]
+Description=ucdisplay
+After=syslog.target network.target nss-lookup.target network-online.target
 
-## Add automatic start script
-- Open the rc.local file 
-```bash
-sudo nano /etc/rc.local
+[Service]
+User=0
+Group=0
+WorkingDirectory=/opt/U6143_ssd1306/C
+ExecStart=/opt/U6143_ssd1306/C/display
+RestartSec=5
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
 ```
-- Add command to the rc.local file
+- Enable the display service 
 ```bash
-cd /home/pi/U6143_ssd1306/C
-sudo make clean 
-sudo make 
-sudo ./display &
+sudo systemctl enable ucdisplay.service
 ```
-- reboot your system
+- Start the display service 
+```bash
+sudo systemctl start ucdisplay.service
+```
+- The display should have come on. Check the display service status for issues
+```bash
+sudo systemctl status ucdisplay.service
+```
+- Reboot your system to ensure display starts at boot.
 
 ## For older 0.91 inch lcd without mcu 
 - For the older version lcd without mcu controller, you can use python demo
